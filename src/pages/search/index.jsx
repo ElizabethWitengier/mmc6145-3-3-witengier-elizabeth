@@ -11,25 +11,25 @@ export default function Search() {
   const [previousQuery, setPreviousQuery] = useState()
   // used to prevent rage clicks on form submits
   const [fetching, setFetching] = useState(false)
-  
+
 
   // TODO: Write a submit handler for the form that fetches data from:
   // https://www.googleapis.com/books/v1/volumes?langRestrict=en&maxResults=16&q=YOUR_QUERY
   // and stores the "items" property in the result to the bookSearchResults variable
   // This function MUST prevent repeat searches if:
-  // fetch has not finished
-  // the query is unchanged
+  // fetch has not finished // the query is unchanged
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if(fetching) return
+    if (query === "") return
+    if (fetching) return
     setFetching(true)
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?langRestrict=en&maxResults=16&q=YOUR_QUERY/{query}`)
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?langRestrict=en&maxResults=16&q=${query}`)
     const data = await res.json()
-    setBookSearchResults(data)
+    setBookSearchResults(data.items)
     setFetching(false)
   }
-
+  console.log(bookSearchResults)
   const inputRef = useRef()
   const inputDivRef = useRef()
 
@@ -48,7 +48,7 @@ export default function Search() {
             onChange={e => setQuery(e.target.value)}
             name="book-search"
             id="book-search"
-            />
+          />
           <button type="submit">Submit</button>
         </div>
       </form>
@@ -57,14 +57,21 @@ export default function Search() {
         // else if there are search results, render those
         // else show the NoResults component
         fetching
-        ? <Loading />
-        : bookSearchResults?.length
-        ? <div className={styles.bookList}>
-            {/* TODO: render BookPreview components for each search result here based on bookSearchResults */}
-          </div>
-        : <NoResults
-          {...{inputRef, inputDivRef, previousQuery}}
-          clearSearch={() => setQuery("")}/>
+          ? <Loading />
+          : bookSearchResults?.length
+            ? <div className={styles.bookList}>
+              {bookSearchResults.map((book) => (
+                <BookPreview
+                  title={book.volumeInfo.title}
+                  authors={book.volumeInfo.authors}
+                  previewLink={book.volumeInfo.previewLink}
+                  thumbnail={book.volumeInfo.imageLinks?.thumbnail}
+                />
+              ))}
+            </div>
+            : <NoResults
+              {...{ inputRef, inputDivRef, previousQuery }}
+              clearSearch={() => setQuery("")} />
       }
     </main>
   )
@@ -90,8 +97,8 @@ function NoResults({ inputDivRef, inputRef, previousQuery, clearSearch }) {
       <button onClick={handleLetsSearchClick}>
         {
           previousQuery
-          ? `Search again?`
-          : `Let's find a book! 🔍`
+            ? `Search again?`
+            : `Let's find a book! 🔍`
         }
       </button>
     </div>
